@@ -1,0 +1,27 @@
+# Name your project
+name: 'weather_data_project'
+version: '1.0.0'
+
+# Specify the profile to use (should match the profile name in profiles.yml)
+profile: 'weather_data_project'
+
+# These configurations specify where dbt should look for different types of files
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Directories to be removed by `dbt clean`
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Configuring models
+models:
+  weather_data_project:
+    # Configs for all models in the 'weather_data' folder
+    weather_data:
+      +schema: public        # Define the schema for the models (e.g., 'public')
+      +materialized: table    # Store models as tables (instead of views) for easier analysis

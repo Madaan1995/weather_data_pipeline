@@ -1,0 +1,11 @@
+weather_data_project:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost  # Or use "host.docker.internal" if you're running Docker Desktop
+      port: 5432
+      user: weather_user
+      password: weather_password
+      dbname: weather_data
+      schema: public  # or any schema you want to use for DBT models

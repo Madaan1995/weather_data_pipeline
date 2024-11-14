@@ -42,6 +42,10 @@ try:
         temp_max FLOAT,
         humidity INT,
         description VARCHAR(50),
+        wind_speed FLOAT,
+        wind_deg INT,
+        cloud_coverage INT,
+        pressure INT,
         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
@@ -53,22 +57,29 @@ try:
         try:
             logger.info(f"Message received from Kafka: {message.value}")
             weather_data = message.value
-            city = weather_data['name']
-            main = weather_data['main']
-            weather_desc = weather_data['weather'][0]['description']
+            city = weather_data.get('city', 'Unknown')
+            main = weather_data.get('main', {})
+            wind = weather_data.get('wind', {})
+            clouds = weather_data.get('clouds', {})
+            weather_desc = weather_data.get('weather', [{}])[0].get('description', 'No description')
 
             # Insert data into PostgreSQL
             cursor.execute('''
-            INSERT INTO weather (city, temperature, feels_like, temp_min, temp_max, humidity, description)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO weather (city, temperature, feels_like, temp_min, temp_max, humidity, description,
+                                 wind_speed, wind_deg, cloud_coverage, pressure)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 city,
-                main['temp'],
-                main['feels_like'],
-                main['temp_min'],
-                main['temp_max'],
-                main['humidity'],
-                weather_desc
+                main.get('temp'),
+                main.get('feels_like'),
+                main.get('temp_min'),
+                main.get('temp_max'),
+                main.get('humidity'),
+                weather_desc,
+                wind.get('speed'),
+                wind.get('deg'),
+                clouds.get('all'),
+                main.get('pressure')
             ))
             conn.commit()
             logger.info(f"Inserted data for city: {city}")

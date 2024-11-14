@@ -1,14 +1,14 @@
 import requests
 import time
-from kafka import KafkaProducer, errors
+from kafka import KafkaProducer
 import json
 
 # Add this delay to ensure Kafka is ready
 time.sleep(10)  # Wait 10 seconds before starting the producer
 
 API_KEY = "04e42cf83b67a00e43f8d68b03033e2b"
-CITY = "Montreal"
-URL = f"http://api.openweathermap.org/data/2.5/weather?q={CITY}&appid={API_KEY}"
+CITIES = ["Montreal", "Toronto", "Vancouver", "Calgary", "Ottawa"]  # List of cities
+URL = "http://api.openweathermap.org/data/2.5/weather"
 
 # Initialize Kafka producer
 producer = KafkaProducer(
@@ -17,14 +17,26 @@ producer = KafkaProducer(
 )
 
 def fetch_weather_data():
-    response = requests.get(URL)
-    if response.status_code == 200:
-        data = response.json()
-        producer.send("weather_data", value=data)
-        print("Sent weather data to Kafka:", data)
-    else:
-        print("Failed to retrieve data", response.status_code)
+    for city in CITIES:
+        try:
+            params = {
+                "q": city,
+                "appid": API_KEY
+            }
+            response = requests.get(URL, params=params)
+            if response.status_code == 200:
+                data = response.json()
+                # Add city name explicitly in data
+                data["city"] = city
+                # Send data to Kafka
+                producer.send("weather_data", value=data)
+                print(f"Sent weather data to Kafka for {city}:", data)
+            else:
+                print(f"Failed to retrieve data for {city}, Status code:", response.status_code)
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data for {city}: {e}")
 
 while True:
     fetch_weather_data()
-    time.sleep(60)
+    # Fetch data every 10 minutes
+    time.sleep(600)
